@@ -1,0 +1,179 @@
+{
+  "parameters": {
+    "fingerLengthM": 1e-06,
+    "coherentSegmentLengthM": 1e-08,
+    "cutoffLengthM": 7.000000000000001e-09,
+    "modeVelocityMPerS": 25000.0,
+    "bathVelocityMPerS": 25000.0,
+    "temperatureMinimumK": 1e-10,
+    "temperatureMaximumK": 10.0,
+    "integerDissipationLengthM": 1e-08,
+    "fractionalDissipationLengthM": 2e-08,
+    "equilibrationDominatedLengthM": 2e-08,
+    "crossTunnelingLengthM": 2.2e-06,
+    "crossAndreevLengthM": 0.0001,
+    "quadratureOrder": 96
+  },
+  "scenarioParameters": {
+    "sc_stronger": {
+      "displayName": "superconductivity stronger",
+      "integerTunnelingLengthM": 5.699999999999999e-07,
+      "integerAndreevLengthM": 5.5e-07,
+      "fractionalTunnelingLengthM": 1.1e-06,
+      "fractionalAndreevLengthM": 5.5e-07
+    },
+    "tunneling_stronger": {
+      "displayName": "tunneling stronger",
+      "integerTunnelingLengthM": 4.5000000000000003e-07,
+      "integerAndreevLengthM": 5.5e-07,
+      "fractionalTunnelingLengthM": 4.5000000000000003e-07,
+      "fractionalAndreevLengthM": 5.5e-07
+    }
+  },
+  "curves": [
+    {
+      "filling": "2over5",
+      "scenario": "sc_stronger",
+      "gCharge": 1.0,
+      "gNeutral": 1.0
+    },
+    {
+      "filling": "2over5",
+      "scenario": "sc_stronger",
+      "gCharge": 1.5,
+      "gNeutral": 1.5
+    },
+    {
+      "filling": "2over5",
+      "scenario": "sc_stronger",
+      "gCharge": 2.0,
+      "gNeutral": 2.0
+    },
+    {
+      "filling": "2over5",
+      "scenario": "sc_stronger",
+      "gCharge": 3.0,
+      "gNeutral": 3.0
+    },
+    {
+      "filling": "2over5",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.0,
+      "gNeutral": 1.0
+    },
+    {
+      "filling": "2over5",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.5,
+      "gNeutral": 1.5
+    },
+    {
+      "filling": "2over5",
+      "scenario": "tunneling_stronger",
+      "gCharge": 2.0,
+      "gNeutral": 2.0
+    },
+    {
+      "filling": "2over5",
+      "scenario": "tunneling_stronger",
+      "gCharge": 3.0,
+      "gNeutral": 3.0
+    },
+    {
+      "filling": "2over3",
+      "scenario": "sc_stronger",
+      "gCharge": 1.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "sc_stronger",
+      "gCharge": 1.5,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "sc_stronger",
+      "gCharge": 2.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "sc_stronger",
+      "gCharge": 3.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.5,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 2.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "2over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 3.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "sc_stronger",
+      "gCharge": 1.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "sc_stronger",
+      "gCharge": 1.5,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "sc_stronger",
+      "gCharge": 2.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "sc_stronger",
+      "gCharge": 3.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 1.5,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 2.0,
+      "gNeutral": null
+    },
+    {
+      "filling": "4over3",
+      "scenario": "tunneling_stronger",
+      "gCharge": 3.0,
+      "gNeutral": null
+    }
+  ]
+}
