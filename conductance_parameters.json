@@ -6,28 +6,32 @@
     "modeVelocityMPerS": 25000.0,
     "bathVelocityMPerS": 25000.0,
     "temperatureMinimumK": 1e-10,
-    "temperatureMaximumK": 10.0,
+    "temperatureMaximumK": 8.0,
     "integerDissipationLengthM": 1e-08,
-    "fractionalDissipationLengthM": 2e-08,
-    "equilibrationDominatedLengthM": 2e-08,
-    "crossTunnelingLengthM": 2.2e-06,
-    "crossAndreevLengthM": 0.0001,
+    "fractionalDissipationLengthM": 2.8e-07,
+    "equilibrationDominatedLengthM": 2.8e-07,
+    "crossTunnelingLengthM": 3.1e-05,
+    "crossAndreevLengthM": 0.0014,
     "quadratureOrder": 96
   },
   "scenarioParameters": {
     "sc_stronger": {
       "displayName": "superconductivity stronger",
-      "integerTunnelingLengthM": 5.699999999999999e-07,
-      "integerAndreevLengthM": 5.5e-07,
-      "fractionalTunnelingLengthM": 1.1e-06,
-      "fractionalAndreevLengthM": 5.5e-07
+      "integerTunnelingLengthM": 1.3e-05,
+      "integerAndreevLengthM": 7.7e-06,
+      "fractionalTunnelingLengthM": 1.5e-05,
+      "fractionalAndreevLengthM": 7.7e-06,
+      "neutralTunnelingLengthM": 0.0015,
+      "neutralAndreevLengthM": 0.00077
     },
     "tunneling_stronger": {
       "displayName": "tunneling stronger",
-      "integerTunnelingLengthM": 4.5000000000000003e-07,
-      "integerAndreevLengthM": 5.5e-07,
-      "fractionalTunnelingLengthM": 4.5000000000000003e-07,
-      "fractionalAndreevLengthM": 5.5e-07
+      "integerTunnelingLengthM": 6.3e-06,
+      "integerAndreevLengthM": 7.7e-06,
+      "fractionalTunnelingLengthM": 6.3e-06,
+      "fractionalAndreevLengthM": 7.7e-06,
+      "neutralTunnelingLengthM": 0.00063,
+      "neutralAndreevLengthM": 0.00077
     }
   },
   "curves": [
@@ -52,8 +56,8 @@
     {
       "filling": "2over5",
       "scenario": "sc_stronger",
-      "gCharge": 3.0,
-      "gNeutral": 3.0
+      "gCharge": 3.1,
+      "gNeutral": 3.1
     },
     {
       "filling": "2over5",
@@ -76,8 +80,8 @@
     {
       "filling": "2over5",
       "scenario": "tunneling_stronger",
-      "gCharge": 3.0,
-      "gNeutral": 3.0
+      "gCharge": 3.1,
+      "gNeutral": 3.1
     },
     {
       "filling": "2over3",
@@ -100,7 +104,7 @@
     {
       "filling": "2over3",
       "scenario": "sc_stronger",
-      "gCharge": 3.0,
+      "gCharge": 3.1,
       "gNeutral": null
     },
     {
@@ -124,7 +128,7 @@
     {
       "filling": "2over3",
       "scenario": "tunneling_stronger",
-      "gCharge": 3.0,
+      "gCharge": 3.1,
       "gNeutral": null
     },
     {
@@ -148,7 +152,7 @@
     {
       "filling": "4over3",
       "scenario": "sc_stronger",
-      "gCharge": 3.0,
+      "gCharge": 3.1,
       "gNeutral": null
     },
     {
@@ -172,7 +176,7 @@
     {
       "filling": "4over3",
       "scenario": "tunneling_stronger",
-      "gCharge": 3.0,
+      "gCharge": 3.1,
       "gNeutral": null
     }
   ]

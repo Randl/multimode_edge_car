@@ -621,7 +621,7 @@ def _preset_model(filling, gc, gn, parameter_items, scenario_items):
         k = block_diag(kedge, -kedge)
         # Charge/neutral rotation: K eigenvalues 5 and 1. Each top/bottom pair
         # has U=kappa*u/2*((g+1/g)I-(g-1/g)sigma_x),
-        # Eq. (43) [paper:eq:Ui-parametrization].
+        # Eq. (46) [paper:eq:Ui-parametrization].
         rotation = np.array([[1.0, 1.0], [1.0, -1.0]]) / np.sqrt(2)
         g = np.array([gc, gn])
         diagonal = (
@@ -639,6 +639,14 @@ def _preset_model(filling, gc, gn, parameter_items, scenario_items):
                 (np.r_[m, 0.0, 0.0], p["fractionalDissipationLengthM"]),
                 (np.r_[0.0, 0.0, -m], p["fractionalDissipationLengthM"]),
             ]
+        # Four-electron inter-side neutral vertices. K_J r=r for r=(1,-1),
+        # so these are local electron-bilinear transfers on each side.
+        # Independent lengths allow either family to be omitted with infinity.
+        root = np.array([1.0, -1.0])
+        coherent += [
+            (np.r_[root, root], scenario.get("neutralTunnelingLengthM", np.inf)),
+            (np.r_[root, -root], scenario.get("neutralAndreevLengthM", np.inf)),
+        ]
 
         def thermal_segment(temperature):
             """Clip the thermal coherence length to [a,L] for the Jain preset."""
@@ -684,7 +692,7 @@ def _preset_model(filling, gc, gn, parameter_items, scenario_items):
         ]
         segment = p["coherentSegmentLengthM"]
     # Convert bare lengths to the dimensionless coefficients consumed by the
-    # generic builder, Eq. (100) [paper:eq:numerical-bare-lengths].
+    # generic builder, Eq. (107) [paper:eq:numerical-bare-lengths].
     current = np.zeros(4)
     current[bottom] = -1
     return build_model(
@@ -709,7 +717,7 @@ def _preset_model(filling, gc, gn, parameter_items, scenario_items):
 def segment_lengths(length, segment):
     """Full coherence segments plus one shorter segment at the tip.
 
-    Implements the segment discretization of Eq. (90) [paper:eq:diff].
+    Implements the segment discretization of Eq. (96) [paper:eq:diff].
     The last segment's kernel is evaluated at its actual length. No fractional
     matrix powers and no subdivision toward the continuum are used.
     """
@@ -890,6 +898,9 @@ def write_csv(path, rows):
 
 SEGMENT_OVER_CUTOFF = 1000.0
 CASES = [(1.0, 0.0), (1.5, 0.0), (2.0, 1.0)]
+SHADING_GUIDE_VERSION = 3
+JAIN_SHADING_THRESHOLD_K = 2.0
+TEMPERATURE_SAMPLING_VERSION = 1
 
 
 def responses(x, d, spin):
@@ -918,11 +929,11 @@ def responses(x, d, spin):
     return exact, short, long
 
 
-def turning_point(config, data_dir, filling, gc, gn):
-    """Refine a selected curve's minimum to set the figure's visual shading guide."""
+def turning_point(config, data_dir, filling, gc, gn, scenario="sc_stronger"):
+    """Locate the selected plotted minimum for the figure's shading guide."""
     curve = {
         "filling": filling,
-        "scenario": "sc_stronger",
+        "scenario": scenario,
         "gCharge": gc,
         "gNeutral": gn,
     }
@@ -933,14 +944,18 @@ def turning_point(config, data_dir, filling, gc, gn):
     index = min(range(len(conductances)), key=conductances.__getitem__)
     if index in (0, len(conductances) - 1):
         raise ValueError(f"The selected {filling} curve has no interior minimum.")
+    if filling == "2over5":
+        # The Jain figure connects the saved commensurate samples. Its guide
+        # must refer to their minimum, without refining between those samples.
+        return temperatures[index]
 
     def response(temperature):
-        """Evaluate the selected solid curve during bounded minimum refinement."""
+        """Evaluate the selected curve during bounded minimum refinement."""
         return evaluate(
             curve,
             temperature,
             config["parameters"],
-            config["scenarioParameters"]["sc_stronger"],
+            config["scenarioParameters"][scenario],
         )["mathcal_G"]
 
     result = minimize_scalar(
@@ -957,8 +972,9 @@ def turning_point(config, data_dir, filling, gc, gn):
 def generate_data(config, data_dir, points):
     """Write conductance CSVs, response CSV, and the metadata consumed by plotting.
 
-    Use linear and logarithmic temperature grids, add segment-count transitions,
-    and refine local extrema.
+    Use linear/logarithmic grids and refine extrema for fixed-length segments.
+    For the Jain figure, retain the one-segment branch below T_L and sample
+    only T_n=n*T_L above it, where the unclipped thermal length is L/n.
     """
     data_dir.mkdir(parents=True, exist_ok=True)
     # An interrupted rebuild must not leave metadata declaring a valid cache.
@@ -968,18 +984,25 @@ def generate_data(config, data_dir, points):
     base = np.unique(
         np.r_[np.geomspace(tmin, tmax, points), np.linspace(tmin, tmax, points)]
     )
+    thermal_unit = p["modeVelocityMPerS"] / (
+        np.pi * KB_OVER_HBAR * p["fingerLengthM"]
+    )
     for curve in config["curves"]:
         temperatures = base
         if curve["filling"] == "2over5":
-            # L/ell_T becomes an integer at T_n=n*hbar*u/(pi*k_B*L).
-            # Include these changes of segment count in the temperature mesh.
-            unit = p["modeVelocityMPerS"] / (np.pi * KB_OVER_HBAR * p["fingerLengthM"])
-            transitions = [
-                i * unit
-                for i in range(1, int(p["fingerLengthM"] / p["cutoffLengthM"]) + 1)
-                if tmin < i * unit < tmax
+            # Sample the existing model at exact integer L/ell_T. Below T_L,
+            # ell_seg=L already, so retain the resolved single-segment branch.
+            # Above ell_T=a the existing cutoff still applies; do not change
+            # a, L, or the finite-segment transport law to force divisibility.
+            commensurate = thermal_unit * np.arange(
+                1, int(np.floor(tmax / thermal_unit)) + 1
+            )
+            commensurate = commensurate[
+                (commensurate >= tmin) & (commensurate <= tmax)
             ]
-            temperatures = np.unique(np.r_[base, transitions])
+            temperatures = np.unique(
+                np.r_[base[base < thermal_unit], commensurate]
+            )
         scenario = config["scenarioParameters"][curve["scenario"]]
         sampled = {}
 
@@ -999,6 +1022,10 @@ def generate_data(config, data_dir, points):
         # the bounded minimization well scaled across temperature decades.
         values = np.array([sample(t) for t in temperatures])
         for i in range(1, len(values) - 1):
+            if curve["filling"] == "2over5" and temperatures[i + 1] > thermal_unit:
+                # Refining a thermal-region extremum would insert off-grid
+                # points and reintroduce the remainder-segment ripples.
+                continue
             left, right = values[i] - values[i - 1], values[i + 1] - values[i]
             if left * right < 0 and max(abs(left), abs(right)) > 1e-9:
                 sign = 1 if left < 0 else -1
@@ -1012,7 +1039,9 @@ def generate_data(config, data_dir, points):
         write_csv(data_dir / name, [sampled[t] for t in sorted(sampled)])
         print(f"{name}: {len(sampled)} points", flush=True)
     integer_threshold = turning_point(config, data_dir, "4over3", 2.0, None)
-    jain_threshold = turning_point(config, data_dir, "2over5", 1.5, 1.5)
+    # The Jain panel uses a fixed visual low-temperature reference interval.
+    # This shading is not inferred from a curve minimum or a thermal length.
+    jain_threshold = JAIN_SHADING_THRESHOLD_K
     response_rows = []
     for d, spin in CASES:
         for x in np.geomspace(0.01, 100, 141):
@@ -1032,10 +1061,29 @@ def generate_data(config, data_dir, points):
         "config": config,
         "points": points,
         "responseCases": CASES,
+        "shadingGuideVersion": SHADING_GUIDE_VERSION,
+        "temperatureSamplingVersion": TEMPERATURE_SAMPLING_VERSION,
+        "temperatureSampling": {
+            "2over5": {
+                "rule": "single-segment branch below T_L; T_n=n*T_L at and above T_L",
+                "thermalUnitK": thermal_unit,
+                "thermalCutoffTemperatureK": p["modeVelocityMPerS"]
+                / (np.pi * KB_OVER_HBAR * p["cutoffLengthM"]),
+                "connectingLines": "guides between computed samples",
+                "transportModelChanged": False,
+            },
+            "2over3": "adaptive linear/logarithmic grid; fixed coherence length",
+            "4over3": "adaptive linear/logarithmic grid; fixed coherence length",
+        },
         "shadingThresholdsK": {
             "2over3": integer_threshold,
             "4over3": integer_threshold,
             "2over5": jain_threshold,
+        },
+        "shadingGuideSources": {
+            "2over3": "same turning-point reference as 4over3",
+            "4over3": "minimum of the solid g_C=2 curve",
+            "2over5": "fixed low-temperature visual reference",
         },
     }
     (data_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -1071,6 +1119,8 @@ def main():
         or cached is None
         or cached.get("config") != config
         or cached.get("points") != args.points
+        or cached.get("shadingGuideVersion") != SHADING_GUIDE_VERSION
+        or cached.get("temperatureSamplingVersion") != TEMPERATURE_SAMPLING_VERSION
         or "shadingThresholdsK" not in cached
         or "responseCases" not in cached
         or not (args.data_dir / "response_crossover.csv").exists()

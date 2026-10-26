@@ -85,6 +85,10 @@ def model_and_generator(filling, gc, gn, temperature, p, scenario):
                 (np.r_[m, 0.0, 0.0], (dt + da) / 4, p["fractionalDissipationLengthM"]),
                 (np.r_[0.0, 0.0, -m], (dt + da) / 4, p["fractionalDissipationLengthM"]),
             ]
+        coherent += [
+            ([1, -1, 1, -1], 2 * gn, 0, scenario.get("neutralTunnelingLengthM", np.inf)),
+            ([1, -1, -1, 1], 2 / gn, 0, scenario.get("neutralAndreevLengthM", np.inf)),
+        ]
     else:
         k = np.diag([1.0, -1.0, 3 * chi, -3 * chi])
         df = 3 * (gc + 1 / gc) / 4
@@ -224,12 +228,27 @@ class ConductanceTests(unittest.TestCase):
             ("4over3", "tunneling_stronger", 3.0, 0.06037560472735624),
         ]
         for filling, scenario, gc, expected in references:
+            solid = scenario == "sc_stronger"
             model = pipeline.preset_model(
                 filling,
                 gc,
                 gc if filling == "2over5" else None,
-                P,
-                CONFIG["scenarioParameters"][scenario],
+                dict(
+                    P,
+                    fractionalDissipationLengthM=2e-8,
+                    equilibrationDominatedLengthM=2e-8,
+                    crossTunnelingLengthM=2.2e-6,
+                    crossAndreevLengthM=1e-4,
+                ),
+                dict(
+                    CONFIG["scenarioParameters"][scenario],
+                    integerTunnelingLengthM=5.7e-7 if solid else 4.5e-7,
+                    integerAndreevLengthM=5.5e-7,
+                    fractionalTunnelingLengthM=1.1e-6 if solid else 4.5e-7,
+                    fractionalAndreevLengthM=5.5e-7,
+                    neutralTunnelingLengthM=np.inf,
+                    neutralAndreevLengthM=np.inf,
+                ),
             )
             self.assertAlmostEqual(
                 model.evaluate(10.0)["G_over_GQ"], expected, delta=1e-8
@@ -713,7 +732,7 @@ class GenericModelTests(unittest.TestCase):
         )
         dt, da = (5 * gc + gn) / 2, (5 / gc + 1 / gn) / 2
         np.testing.assert_allclose(
-            model.cosines.dimensions, [dt, da, dt, da], rtol=1e-13
+            model.cosines.dimensions, [dt, da, dt, da, 2 * gn, 2 / gn], rtol=1e-13
         )
         np.testing.assert_allclose(
             model.bath.dimensions, [(dt + da) / 4] * 4, rtol=1e-13

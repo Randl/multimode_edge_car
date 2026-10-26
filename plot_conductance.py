@@ -15,14 +15,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 
 FILLINGS = {
     "2over5": (
         "2/5",
-        [("1p", "1p"), ("1p5", "1p5"), ("2p", "2p"), ("3p", "3p")],
+        [("1p", "1p"), ("1p5", "1p5"), ("2p", "2p"), ("3p1", "3p1")],
     ),
-    "2over3": ("2/3", [("1p", None), ("1p5", None), ("2p", None), ("3p", None)]),
-    "4over3": ("4/3", [("1p", None), ("1p5", None), ("2p", None), ("3p", None)]),
+    "2over3": ("2/3", [("1p", None), ("1p5", None), ("2p", None), ("3p1", None)]),
+    "4over3": ("4/3", [("1p", None), ("1p5", None), ("2p", None), ("3p1", None)]),
 }
 
 COLORS = [
@@ -97,7 +98,11 @@ def shade_low_temperature(axis, crossover_temperature: float) -> None:
 
 
 def render_filling(
-    filling: str, crossover_temperature: float, data_dir: Path, output_dir: Path
+    filling: str,
+    crossover_temperature: float,
+    data_dir: Path,
+    output_dir: Path,
+    temperature_maximum: float,
 ) -> None:
     filling_fraction, parameter_values = FILLINGS[filling]
     nu = float(Fraction(filling_fraction))
@@ -123,8 +128,9 @@ def render_filling(
             )
 
     if filling == "2over3":
-        axis.set_ylim(-0.035 * nu, 0.06 * nu)
-        axis.set_yticks([-0.02, 0.0, 0.02, 0.04])
+        axis.set_ylim(-0.025, 0.025)
+        axis.set_yticks([-0.02, -0.01, 0.0, 0.01, 0.02])
+        axis.ticklabel_format(axis="y", style="plain", useOffset=False)
     elif filling == "4over3":
         axis.set_ylim(-0.28 * nu, 0.28 * nu)
     else:
@@ -133,7 +139,7 @@ def render_filling(
         span = max(data_max - data_min, 1.0e-3)
         padding = 0.06 * span
         axis.set_ylim(data_min - padding, data_max + padding)
-    axis.set_xlim(0.0, 10.0)
+    axis.set_xlim(0.0, temperature_maximum)
     axis.set_xlabel(r"$T[\mathrm{K}]$")
     axis.set_ylabel(r"$G/G_{\mathrm Q}$", labelpad=0)
     axis.grid(True)
@@ -212,6 +218,7 @@ def render_filling(
     if filling == "2over3":
         inset = axis.inset_axes([0.12, 0.76, 0.34, 0.18])
         shade_low_temperature(inset, crossover_temperature)
+        inset_conductances = []
         for color, (g_charge, g_neutral) in zip(COLORS, parameter_values):
             for scenario in plot_order:
                 temperatures, conductances = read_curve(
@@ -223,23 +230,28 @@ def render_filling(
                     color=color,
                     linestyle=scenario_styles[scenario],
                 )
+                inset_conductances.extend(g for t, g in zip(temperatures, conductances) if t <= 3.0)
         inset.tick_params(labelsize=6.5, pad=1.5, length=2)
         inset.grid(True)
         inset.set_xlim(0.0, 3.0)
         inset.set_xticks([0, 1, 2, 3])
-        inset.set_yticks([0.0, 0.01], labels=[r"$0$", r"$0.01$"])
         # Resolve the two small non-quantized integer plateaus: CAR-dominated
         # integer scattering is negative and tunneling-dominated scattering
         # is positive.
-        inset.set_ylim(-6e-3 * nu, 27e-3 * nu)
+        inset_min, inset_max = min(inset_conductances), max(inset_conductances)
+        inset_span = max(inset_max - inset_min, 1e-12)
+        inset.set_ylim(inset_min - .15 * inset_span, inset_max + .15 * inset_span)
+        inset.yaxis.set_major_locator(MaxNLocator(nbins=2))
+        inset.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3), useMathText=True)
+        inset.yaxis.get_offset_text().set_fontsize(6)
         # The parent grid continues outside the inset frame. Give the small
         # tick labels a white background so no parent grid line crosses text.
         for label in inset.get_xticklabels() + inset.get_yticklabels():
             label.set_bbox(dict(facecolor="white", edgecolor="none", pad=0.3))
 
     if filling == "2over5":
-        # The g=2 return to transmission occurs below a millikelvin and is
-        # compressed against the vertical axis in the main linear-scale plot.
+        # The low-temperature g=2 return to transmission is compressed
+        # against the vertical axis in the main linear-scale plot.
         # Leave room below the inset for its tick labels, above the main curves.
         inset = axis.inset_axes([0.38, 0.62, 0.52, 0.16])
         for scenario in plot_order:
@@ -253,9 +265,9 @@ def render_filling(
                 linestyle=scenario_styles[scenario],
             )
         inset.axhline(nu, color="black", linewidth=0.6, linestyle=":")
-        inset.set_xlim(1e-7, 1e-2)
+        inset.set_xlim(1e-6, 1e-1)
         inset.set_ylim(-0.45, 0.48)
-        inset.set_xticks([1e-6, 1e-4, 1e-2])
+        inset.set_xticks([1e-6, 1e-3, 1e-1])
         inset.set_yticks([-nu, nu], labels=[r"$-2/5$", r"$+2/5$"])
         inset.tick_params(labelsize=6.5, pad=1.5, length=2)
         inset.minorticks_off()
@@ -337,7 +349,13 @@ def render_conductances(metadata, data_dir, output_dir):
     )
     for filling in FILLINGS:
         threshold = metadata["shadingThresholdsK"][filling]
-        render_filling(filling, threshold, data_dir, output_dir)
+        render_filling(
+            filling,
+            threshold,
+            data_dir,
+            output_dir,
+            metadata["config"]["parameters"]["temperatureMaximumK"],
+        )
         print(f"{filling}: shading T < {threshold:.6g} K.")
 
 
