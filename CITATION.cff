@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below. For BibTeX in our preprint format, use CITATION.bib."
+type: software
+title: "Classification and Signatures of Dissipative Quantum Hall-Superconductor Junctions"
+authors:
+  - family-names: Zheltonozhskii
+    given-names: Evgenii
+  - family-names: Katzir
+    given-names: "Barak A."
+  - family-names: Oreg
+    given-names: Yuval
+  - family-names: Berg
+    given-names: Erez
+  - family-names: Lindner
+    given-names: "Netanel H."
+repository-code: "https://github.com/Randl/multimode_edge_car"
+preferred-citation:
+  type: article
+  title: "Classification and Signatures of Dissipative Quantum Hall-Superconductor Junctions"
+  authors:
+    - family-names: Zheltonozhskii
+      given-names: Evgenii
+    - family-names: Katzir
+      given-names: "Barak A."
+    - family-names: Oreg
+      given-names: Yuval
+    - family-names: Berg
+      given-names: Erez
+    - family-names: Lindner
+      given-names: "Netanel H."
+  year: 2026
+  month: 11
+  journal: "arXiv preprint"
+  url: "https://arxiv.org/abs/2611.05555"
+  identifiers:
+    - type: other
+      value: "arXiv:2611.05555"
+      description: "arXiv preprint identifier"
